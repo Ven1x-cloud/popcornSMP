@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Popcorn SMP</title>
   <link rel="stylesheet" href="style.css" />
+
+  <script>
+(async function () {
+  const logoPath = "logo.svg";
+
+  try {
+    const res = await fetch(logoPath, { method: "HEAD" });
+    if (!res.ok) return;
+
+    let icon = document.querySelector('link[rel="icon"]');
+    if (!icon) {
+      icon = document.createElement("link");
+      icon.rel = "icon";
+      document.head.appendChild(icon);
+    }
+
+    icon.type = "image/svg+xml";
+    icon.href = logoPath;
+  } catch (err) {
+    console.log("logo.svg niet gevonden");
+  }
+})();
+</script>
 </head>
 <body>
   <div class="background-glow glow-1"></div>
