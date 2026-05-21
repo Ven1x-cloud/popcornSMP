@@ -3,66 +3,174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SMP Prototype</title>
+  <title>Popcorn SMP</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="hero">
-        <h1>SMP Website Prototype</h1>
-        <p class="small">GitHub Pages frontend + Python/Flask API backend</p>
-      </div>
-    </header>
+  <div class="background-glow glow-1"></div>
+  <div class="background-glow glow-2"></div>
+  <div class="background-glow glow-3"></div>
 
-    <section class="grid">
-      <div class="card">
-        <h2>API status</h2>
-        <p>Klik om te testen of je backend online is.</p>
-        <button id="healthBtn">Test backend</button>
-        <pre id="healthOut">Nog niet getest.</pre>
+  <header class="topbar">
+    <div class="auth-anchor">
+      <div class="auth-buttons">
+        <button id="loginToggle" class="chip-btn">Login</button>
+        <button id="registerToggle" class="chip-btn chip-btn-alt">Registreren</button>
       </div>
 
-      <div class="card">
-        <h2>Registreren</h2>
-        <input id="registerUsername" placeholder="gebruikersnaam" />
-        <input id="registerPassword" type="password" placeholder="wachtwoord" />
-        <button id="registerBtn">Maak account</button>
-      </div>
-
-      <div class="card">
-        <h2>Inloggen</h2>
+      <div id="loginPanel" class="auth-panel hidden">
+        <h3>Inloggen</h3>
         <input id="loginUsername" placeholder="gebruikersnaam" />
         <input id="loginPassword" type="password" placeholder="wachtwoord" />
         <button id="loginBtn">Login</button>
         <button id="logoutBtn" class="secondary">Logout</button>
       </div>
-    </section>
 
-    <section class="card">
-      <h2>Mijn account</h2>
-      <pre id="meOut">Nog niet ingelogd.</pre>
-      <button id="meBtn">Laad mijn profiel</button>
-    </section>
-
-    <section id="adminPanel" class="card hidden">
-      <h2>Admin panel</h2>
-      <p>Alleen zichtbaar voor ADMIN of OWNER.</p>
-      <div id="serverStatus" class="status offline">offline</div>
-      <div class="grid">
-        <button id="startBtn">Start</button>
-        <button id="restartBtn" class="warning">Restart</button>
-        <button id="stopBtn" class="danger">Stop</button>
+      <div id="registerPanel" class="auth-panel hidden">
+        <h3>Registreren</h3>
+        <input id="registerUsername" placeholder="gebruikersnaam" />
+        <input id="registerPassword" type="password" placeholder="wachtwoord" />
+        <button id="registerBtn">Maak account</button>
       </div>
-      <button id="loadAdminBtn" class="secondary">Ververs admin data</button>
-      <pre id="adminOut">Nog geen admin data geladen.</pre>
+    </div>
+
+    <div class="brand-wrap">
+      <span class="brand-badge">SMP</span>
+      <span class="brand-name">Popcorn SMP</span>
+    </div>
+
+    <div id="sessionPill" class="session-pill">Niet ingelogd</div>
+  </header>
+
+  <main class="container">
+    <section class="hero hero-minecraft card">
+      <div class="hero-copy">
+        <p class="eyebrow eyebrow-gold">Luxe Minecraft survival</p>
+        <h1>Welkom bij <span>Popcorn SMP</span></h1>
+        <p class="hero-text">
+          Een stijlvolle SMP-website met een Minecraft gevoel bovenaan en een luxe gaming uitstraling verder naar beneden.
+        </p>
+
+        <div class="tag-row">
+          <span class="tag">Survival</span>
+          <span class="tag">Events</span>
+          <span class="tag">Ranks</span>
+          <span class="tag">Community</span>
+        </div>
+
+        <div class="hero-actions">
+          <button id="openLoginHero">Login</button>
+          <button id="openRegisterHero" class="secondary">Maak account</button>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <div class="realm-panel">
+          <p class="small-label">Server info</p>
+          <div class="realm-ip">play.popcornsmp.net</div>
+          <div class="realm-stats">
+            <div>
+              <span>Mode</span>
+              <strong>SMP</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong>Prototype</strong>
+            </div>
+            <div>
+              <span>Stijl</span>
+              <strong>Luxe</strong>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <footer>
-      Eerste prototype. Later koppelen we hier Minecraft-linking en echte server-integratie aan.
-    </footer>
-  </div>
+    <section class="feature-band minecraft-band">
+      <article class="card feature-card block-card">
+        <h2>Grindy survival</h2>
+        <p>Bouw een echte wereld op met claims, shops, basisprogressie en community-projecten.</p>
+      </article>
+      <article class="card feature-card block-card">
+        <h2>Ranks & perks</h2>
+        <p>Later koppelbaar aan ranks, cosmetics, crates, kits en speciale servervoordelen.</p>
+      </article>
+      <article class="card feature-card block-card">
+        <h2>Events</h2>
+        <p>Organiseer toernooien, build events, boss fights en staff announcements op één plek.</p>
+      </article>
+    </section>
+
+    <section class="card info-card profile-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Mijn account</p>
+          <h2>Profiel</h2>
+        </div>
+        <button id="meBtn" class="secondary slim-btn">Ververs</button>
+      </div>
+      <div id="meOut" class="info-box">Nog niet ingelogd.</div>
+    </section>
+
+    <section id="adminPanel" class="card info-card admin-card hidden">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Beheer</p>
+          <h2>Admin panel</h2>
+        </div>
+        <button id="loadAdminBtn" class="secondary slim-btn">Ververs admin data</button>
+      </div>
+
+      <div class="server-row">
+        <div>
+          <p class="small-label">Server status</p>
+          <div id="serverStatus" class="status offline">offline</div>
+        </div>
+        <div class="server-actions">
+          <button id="startBtn">Start</button>
+          <button id="restartBtn" class="warning">Restart</button>
+          <button id="stopBtn" class="danger">Stop</button>
+        </div>
+      </div>
+
+      <div id="adminOut" class="info-box">Nog geen admin data geladen.</div>
+    </section>
+
+    <section class="gaming-section">
+      <div class="section-title-wrap">
+        <p class="eyebrow eyebrow-blue">Luxury gaming style</p>
+        <h2 class="section-title">Onderkant van de site in een moderne gaming look</h2>
+      </div>
+
+      <div class="feature-band gaming-band">
+        <article class="card feature-card neon-card">
+          <h2>Community hub</h2>
+          <p>Discord, nieuws, staff updates, giveaways en event announcements in één premium interface.</p>
+        </article>
+        <article class="card feature-card neon-card neon-card-mid">
+          <h2>Player dashboard</h2>
+          <p>Koppel later jouw Minecraft account, stats, ranks, linked rewards en profielinstellingen.</p>
+        </article>
+        <article class="card feature-card neon-card">
+          <h2>Future store</h2>
+          <p>De layout is alvast klaar voor een store, vote pagina, support center en server portals.</p>
+        </article>
+      </div>
+
+      <div class="card cta-card">
+        <div>
+          <p class="eyebrow eyebrow-blue">Next step</p>
+          <h2>Nu eerst design, daarna backend en echte koppelingen</h2>
+          <p>We kunnen hierna de homepagina verder vullen met rules, staff, screenshots, FAQ en een echte SMP landingpage flow.</p>
+        </div>
+        <div class="cta-actions">
+          <button id="openLoginFooter">Login</button>
+          <button id="openRegisterFooter" class="secondary">Registreren</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script src="app.js"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ff173772b718071',t:'MTc3OTM0NDE3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
