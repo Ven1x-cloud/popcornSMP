@@ -1,0 +1,80 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: #0b1020;
+  color: #e5e7eb;
+}
+.container {
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+}
+header {
+  padding: 48px 0 24px;
+}
+.hero {
+  display: grid;
+  gap: 16px;
+}
+.card {
+  background: #121933;
+  border: 1px solid #243055;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+input, button, select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e5e7eb;
+  margin-top: 10px;
+}
+button {
+  background: #2563eb;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+button.secondary {
+  background: #475569;
+}
+button.danger {
+  background: #dc2626;
+}
+button.warning {
+  background: #d97706;
+}
+.status {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+.status.offline { background: #3f3f46; }
+.status.online { background: #15803d; }
+.status.starting, .status.restarting { background: #d97706; }
+.status.stopping { background: #b91c1c; }
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #0a0f1f;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #1e293b;
+}
+.hidden { display: none; }
+.small { font-size: 14px; color: #94a3b8; }
+footer {
+  padding: 24px 0 48px;
+  color: #94a3b8;
+}
