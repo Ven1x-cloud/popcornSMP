@@ -6,6 +6,8 @@ const adminOut = document.getElementById("adminOut");
 const adminPanel = document.getElementById("adminPanel");
 const serverStatus = document.getElementById("serverStatus");
 const sessionPill = document.getElementById("sessionPill");
+const loginMessage = document.getElementById("loginMessage");
+const registerMessage = document.getElementById("registerMessage");
 
 const loginPanel = document.getElementById("loginPanel");
 const registerPanel = document.getElementById("registerPanel");
@@ -15,6 +17,10 @@ const openLoginHero = document.getElementById("openLoginHero");
 const openRegisterHero = document.getElementById("openRegisterHero");
 const openLoginFooter = document.getElementById("openLoginFooter");
 const openRegisterFooter = document.getElementById("openRegisterFooter");
+const toggleLinkBtn = document.getElementById("toggleLinkBtn");
+const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+
+let currentUser = null;
 
 function getToken() {
   return localStorage.getItem(tokenKey);
@@ -26,6 +32,17 @@ function setToken(token) {
 
 function clearToken() {
   localStorage.removeItem(tokenKey);
+}
+
+function setMessage(element, type, text) {
+  if (!text) {
+    element.textContent = "";
+    element.className = "auth-message hidden";
+    return;
+  }
+
+  element.textContent = text;
+  element.className = `auth-message ${type}`;
 }
 
 async function api(path, options = {}) {
@@ -70,21 +87,76 @@ function showAdminStatus(status) {
   serverStatus.className = `status ${status}`;
 }
 
+function updateProfileButtons() {
+  const disabled = !currentUser;
+  toggleLinkBtn.disabled = disabled;
+  deleteAccountBtn.disabled = disabled;
+
+  if (!currentUser) {
+    toggleLinkBtn.textContent = "Koppel account";
+    return;
+  }
+
+  if (currentUser.linked) {
+    toggleLinkBtn.textContent = "Ontkoppel account";
+  } else if (currentUser.link_code) {
+    toggleLinkBtn.textContent = "Vernieuw link-code";
+  } else {
+    toggleLinkBtn.textContent = "Koppel account";
+  }
+}
+
 function setLoggedOutState(message = "Nog niet ingelogd.") {
+  currentUser = null;
   meOut.textContent = message;
   adminOut.textContent = "Nog geen admin data geladen.";
   sessionPill.textContent = "Niet ingelogd";
   adminPanel.classList.add("hidden");
   showAdminStatus("offline");
+  updateProfileButtons();
 }
 
 function renderProfile(user) {
+  currentUser = user;
+
+  const linkedText = user.linked
+    ? `${user.minecraft_username || "Onbekend"}${user.minecraft_uuid ? ` (${user.minecraft_uuid})` : ""}`
+    : "Nog niet gekoppeld";
+
+  const linkCodeSection = user.link_code
+    ? `
+      <div class="link-code-box">
+        <strong>Huidige Minecraft link-code</strong>
+        <div class="link-code-value">${user.link_code}</div>
+        <div style="margin-top:8px;color:#d1fae5">Geldig tot: ${new Date(user.link_code_expires_at).toLocaleString("nl-NL")}</div>
+        <div style="margin-top:8px;color:#d1fae5">Gebruik later in Minecraft: <strong>/link ${user.link_code}</strong></div>
+      </div>
+    `
+    : "";
+
   meOut.innerHTML = `
-    <strong>${user.username}</strong><br>
-    Rol: ${user.role}<br>
-    Account aangemaakt: ${new Date(user.created_at).toLocaleString("nl-NL")}
+    <div class="profile-grid">
+      <div class="profile-item">
+        <strong>Gebruikersnaam</strong>
+        <span>${user.username}</span>
+      </div>
+      <div class="profile-item">
+        <strong>Rol</strong>
+        <span>${user.role}</span>
+      </div>
+      <div class="profile-item">
+        <strong>Account aangemaakt</strong>
+        <span>${new Date(user.created_at).toLocaleString("nl-NL")}</span>
+      </div>
+      <div class="profile-item">
+        <strong>Minecraft koppeling</strong>
+        <span>${linkedText}</span>
+      </div>
+    </div>
+    ${linkCodeSection}
   `;
   sessionPill.textContent = `${user.username} · ${user.role}`;
+  updateProfileButtons();
 }
 
 function renderAdmin(data) {
@@ -155,20 +227,41 @@ loginPanel.addEventListener("click", (event) => event.stopPropagation());
 registerPanel.addEventListener("click", (event) => event.stopPropagation());
 document.addEventListener("click", closeAuthPanels);
 
+document.getElementById("registerUsername").addEventListener("blur", async (event) => {
+  const username = event.target.value.trim();
+  if (!username) return;
+
+  try {
+    const data = await api(`/api/check-username?username=${encodeURIComponent(username)}`, { method: "GET" });
+    setMessage(registerMessage, data.available ? "success" : "error", data.message);
+  } catch (error) {
+    setMessage(registerMessage, "error", error.message);
+  }
+});
+
 document.getElementById("registerBtn").addEventListener("click", async () => {
   const username = document.getElementById("registerUsername").value.trim();
   const password = document.getElementById("registerPassword").value;
+  const passwordConfirm = document.getElementById("registerPasswordConfirm").value;
+
+  if (password !== passwordConfirm) {
+    setMessage(registerMessage, "error", "De wachtwoorden zijn niet hetzelfde.");
+    return;
+  }
 
   try {
     const data = await api("/api/register", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     });
-    alert(data.message);
+    setMessage(registerMessage, "success", data.message);
+    document.getElementById("registerPassword").value = "";
+    document.getElementById("registerPasswordConfirm").value = "";
     closeAuthPanels();
     togglePanel(loginPanel);
+    setMessage(loginMessage, "info", "Account gemaakt. Log nu in.");
   } catch (error) {
-    alert(error.message);
+    setMessage(registerMessage, "error", error.message);
   }
 });
 
@@ -183,11 +276,11 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     });
     setToken(data.token);
     closeAuthPanels();
+    setMessage(loginMessage, "success", data.message);
     renderProfile(data.user);
-    alert(`Ingelogd als ${data.user.username} (${data.user.role})`);
     await loadMe();
   } catch (error) {
-    alert(error.message);
+    setMessage(loginMessage, "error", error.message);
   }
 });
 
@@ -199,11 +292,45 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   }
   clearToken();
   closeAuthPanels();
+  setMessage(loginMessage, "info", "Je bent uitgelogd.");
   setLoggedOutState();
 });
 
 document.getElementById("meBtn").addEventListener("click", loadMe);
 document.getElementById("loadAdminBtn").addEventListener("click", loadAdmin);
+
+toggleLinkBtn.addEventListener("click", async () => {
+  if (!currentUser) {
+    meOut.textContent = "Log eerst in om te koppelen.";
+    return;
+  }
+
+  try {
+    const endpoint = currentUser.linked ? "/api/me/unlink" : "/api/me/link-code";
+    const data = await api(endpoint, { method: "POST" });
+    renderProfile(data.user);
+  } catch (error) {
+    meOut.textContent = error.message;
+  }
+});
+
+deleteAccountBtn.addEventListener("click", async () => {
+  if (!currentUser) {
+    meOut.textContent = "Log eerst in om je account te verwijderen.";
+    return;
+  }
+
+  const confirmed = confirm(`Weet je zeker dat je account ${currentUser.username} verwijderd moet worden?`);
+  if (!confirmed) return;
+
+  try {
+    const data = await api("/api/me", { method: "DELETE" });
+    clearToken();
+    setLoggedOutState(data.message);
+  } catch (error) {
+    meOut.textContent = error.message;
+  }
+});
 
 document.getElementById("startBtn").addEventListener("click", async () => {
   try {
@@ -213,7 +340,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
     });
     await loadAdmin();
   } catch (error) {
-    alert(error.message);
+    adminOut.textContent = error.message;
   }
 });
 
@@ -225,7 +352,7 @@ document.getElementById("restartBtn").addEventListener("click", async () => {
     });
     await loadAdmin();
   } catch (error) {
-    alert(error.message);
+    adminOut.textContent = error.message;
   }
 });
 
@@ -237,9 +364,11 @@ document.getElementById("stopBtn").addEventListener("click", async () => {
     });
     await loadAdmin();
   } catch (error) {
-    alert(error.message);
+    adminOut.textContent = error.message;
   }
 });
+
+updateProfileButtons();
 
 if (getToken()) {
   loadMe();

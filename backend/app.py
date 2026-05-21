@@ -3,9 +3,10 @@ from __future__ import annotations
 import os
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
+import re
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -13,6 +14,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE_PATH = BASE_DIR / "app.db"
+USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -22,10 +24,54 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def parse_iso_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def get_db() -> sqlite3.Connection:
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def ensure_column(db: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    columns = {row["name"] for row in db.execute(f"PRAGMA table_info({table})").fetchall()}
+    if column not in columns:
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def find_user_by_username(db: sqlite3.Connection, username: str) -> sqlite3.Row | None:
+    return db.execute(
+        "SELECT * FROM users WHERE LOWER(username) = LOWER(?)",
+        (username,),
+    ).fetchone()
+
+
+def find_user_by_link_code(db: sqlite3.Connection, code: str) -> sqlite3.Row | None:
+    return db.execute(
+        "SELECT * FROM users WHERE link_code = ?",
+        (code,),
+    ).fetchone()
+
+
+def validate_username(username: str) -> str | None:
+    if not USERNAME_RE.match(username):
+        return "Gebruikersnaam moet 3-20 tekens zijn en alleen letters, cijfers of _ bevatten."
+    return None
+
+
+def validate_password(password: str) -> str | None:
+    if len(password) < 8:
+        return "Wachtwoord moet minimaal 8 tekens zijn."
+    return None
 
 
 def init_db() -> None:
@@ -66,6 +112,11 @@ def init_db() -> None:
         """
     )
 
+    ensure_column(db, "users", "minecraft_uuid", "TEXT")
+    ensure_column(db, "users", "minecraft_username", "TEXT")
+    ensure_column(db, "users", "link_code", "TEXT")
+    ensure_column(db, "users", "link_code_expires_at", "TEXT")
+
     state = db.execute("SELECT id FROM server_state WHERE id = 1").fetchone()
     if not state:
         db.execute(
@@ -75,7 +126,7 @@ def init_db() -> None:
 
     owner_username = os.getenv("OWNER_USERNAME", "owner")
     owner_password = os.getenv("OWNER_PASSWORD", "changeme123!")
-    owner = db.execute("SELECT id FROM users WHERE username = ?", (owner_username,)).fetchone()
+    owner = find_user_by_username(db, owner_username)
 
     if not owner:
         db.execute(
@@ -94,6 +145,11 @@ def user_to_dict(row: sqlite3.Row) -> dict:
         "username": row["username"],
         "role": row["role"],
         "created_at": row["created_at"],
+        "minecraft_username": row["minecraft_username"],
+        "minecraft_uuid": row["minecraft_uuid"],
+        "linked": bool(row["minecraft_uuid"]),
+        "link_code": row["link_code"],
+        "link_code_expires_at": row["link_code_expires_at"],
     }
 
 
@@ -147,11 +203,25 @@ def require_admin(view_func):
     return wrapper
 
 
+
+def require_plugin_secret(view_func):
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        expected_secret = os.getenv("PLUGIN_SECRET", "dev-plugin-secret")
+        provided_secret = request.headers.get("X-Plugin-Secret", "")
+
+        if not provided_secret or provided_secret != expected_secret:
+            return jsonify({"error": "Ongeldige plugin secret."}), 401
+        return view_func(*args, **kwargs)
+
+    return wrapper
+
+
 @app.get("/")
 def index():
     return jsonify({
-        "name": "SMP prototype backend",
-        "message": "Gebruik /api/health om de API te testen."
+        "name": "Popcorn SMP backend",
+        "message": "Gebruik de /api routes voor auth en admin acties.",
     })
 
 
@@ -164,31 +234,63 @@ def health():
     })
 
 
+@app.get("/api/check-username")
+def check_username():
+    username = (request.args.get("username") or "").strip()
+    error = validate_username(username)
+
+    if error:
+        return jsonify({"ok": False, "available": False, "error": error}), 400
+
+    db = get_db()
+    existing = find_user_by_username(db, username)
+    db.close()
+
+    return jsonify({
+        "ok": True,
+        "available": existing is None,
+        "message": "Gebruikersnaam is beschikbaar." if existing is None else "Gebruikersnaam bestaat al.",
+    })
+
+
 @app.post("/api/register")
 def register():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
 
-    if len(username) < 3:
-        return jsonify({"error": "Gebruikersnaam moet minimaal 3 tekens zijn."}), 400
-    if len(password) < 6:
-        return jsonify({"error": "Wachtwoord moet minimaal 6 tekens zijn."}), 400
+    username_error = validate_username(username)
+    if username_error:
+        return jsonify({"error": username_error}), 400
+
+    password_error = validate_password(password)
+    if password_error:
+        return jsonify({"error": password_error}), 400
 
     db = get_db()
-    existing = db.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    existing = find_user_by_username(db, username)
     if existing:
         db.close()
-        return jsonify({"error": "Gebruikersnaam bestaat al."}), 409
+        return jsonify({"error": "Deze gebruikersnaam bestaat al."}), 409
 
     db.execute(
-        "INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, 'USER', ?)",
+        """
+        INSERT INTO users (
+            username, password_hash, role, created_at,
+            minecraft_uuid, minecraft_username, link_code, link_code_expires_at
+        ) VALUES (?, ?, 'USER', ?, NULL, NULL, NULL, NULL)
+        """,
         (username, generate_password_hash(password), utc_now()),
     )
     db.commit()
+    user = find_user_by_username(db, username)
     db.close()
 
-    return jsonify({"ok": True, "message": "Account aangemaakt."}), 201
+    return jsonify({
+        "ok": True,
+        "message": "Account aangemaakt. Je kunt nu inloggen.",
+        "user": user_to_dict(user),
+    }), 201
 
 
 @app.post("/api/login")
@@ -198,10 +300,10 @@ def login():
     password = data.get("password") or ""
 
     db = get_db()
-    user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    user = find_user_by_username(db, username)
     if not user or not check_password_hash(user["password_hash"], password):
         db.close()
-        return jsonify({"error": "Ongeldige login."}), 401
+        return jsonify({"error": "Gebruikersnaam of wachtwoord klopt niet."}), 401
 
     token = secrets.token_urlsafe(32)
     db.execute(
@@ -213,6 +315,7 @@ def login():
 
     return jsonify({
         "ok": True,
+        "message": f"Welkom terug, {user['username']}!",
         "token": token,
         "user": user_to_dict(user),
     })
@@ -234,6 +337,128 @@ def logout(user):
 @require_auth
 def me(user):
     return jsonify({"ok": True, "user": user_to_dict(user)})
+
+
+@app.post("/api/me/link-code")
+@require_auth
+def create_link_code(user):
+    code = f"POP-{secrets.randbelow(900000) + 100000}"
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+
+    db = get_db()
+    db.execute(
+        "UPDATE users SET link_code = ?, link_code_expires_at = ? WHERE id = ?",
+        (code, expires_at, user["id"]),
+    )
+    db.commit()
+    updated = db.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    db.close()
+
+    return jsonify({
+        "ok": True,
+        "message": "Nieuwe link-code aangemaakt.",
+        "user": user_to_dict(updated),
+    })
+
+
+@app.post("/api/me/unlink")
+@require_auth
+def unlink_me(user):
+    db = get_db()
+    db.execute(
+        """
+        UPDATE users
+        SET minecraft_uuid = NULL,
+            minecraft_username = NULL,
+            link_code = NULL,
+            link_code_expires_at = NULL
+        WHERE id = ?
+        """,
+        (user["id"],),
+    )
+    db.commit()
+    updated = db.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    db.close()
+
+    return jsonify({
+        "ok": True,
+        "message": "Minecraft account losgekoppeld.",
+        "user": user_to_dict(updated),
+    })
+
+
+@app.delete("/api/me")
+@require_auth
+def delete_me(user):
+    if user["role"] == "OWNER":
+        return jsonify({"error": "Het OWNER account kan niet verwijderd worden."}), 403
+
+    db = get_db()
+    db.execute("DELETE FROM tokens WHERE user_id = ?", (user["id"],))
+    db.execute("DELETE FROM command_log WHERE user_id = ?", (user["id"],))
+    db.execute("DELETE FROM users WHERE id = ?", (user["id"],))
+    db.commit()
+    db.close()
+
+    return jsonify({"ok": True, "message": "Je account is verwijderd."})
+
+
+@app.get("/api/plugin/health")
+@require_plugin_secret
+def plugin_health():
+    return jsonify({"ok": True, "message": "Plugin auth werkt.", "time": utc_now()})
+
+
+@app.post("/api/plugin/link")
+@require_plugin_secret
+def plugin_link():
+    data = request.get_json(silent=True) or {}
+    code = (data.get("code") or "").strip().upper()
+    minecraft_username = (data.get("minecraft_username") or "").strip()
+    minecraft_uuid = (data.get("minecraft_uuid") or "").strip()
+
+    if not code or not minecraft_username or not minecraft_uuid:
+        return jsonify({"error": "code, minecraft_username en minecraft_uuid zijn verplicht."}), 400
+
+    db = get_db()
+    user = find_user_by_link_code(db, code)
+    if not user:
+        db.close()
+        return jsonify({"error": "Link-code niet gevonden."}), 404
+
+    expires_at = parse_iso_datetime(user["link_code_expires_at"])
+    if not expires_at or expires_at < datetime.now(timezone.utc):
+        db.close()
+        return jsonify({"error": "Link-code is verlopen."}), 410
+
+    taken = db.execute(
+        "SELECT id, username FROM users WHERE minecraft_uuid = ? AND id != ?",
+        (minecraft_uuid, user["id"]),
+    ).fetchone()
+    if taken:
+        db.close()
+        return jsonify({"error": f"Minecraft account is al gekoppeld aan {taken['username']}."}), 409
+
+    db.execute(
+        """
+        UPDATE users
+        SET minecraft_uuid = ?,
+            minecraft_username = ?,
+            link_code = NULL,
+            link_code_expires_at = NULL
+        WHERE id = ?
+        """,
+        (minecraft_uuid, minecraft_username, user["id"]),
+    )
+    db.commit()
+    updated = db.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    db.close()
+
+    return jsonify({
+        "ok": True,
+        "message": f"{minecraft_username} gekoppeld aan {updated['username']}",
+        "user": user_to_dict(updated),
+    })
 
 
 @app.get("/api/admin/server")
@@ -320,7 +545,7 @@ def promote_user(user):
         return jsonify({"error": "Ongeldige rol."}), 400
 
     db = get_db()
-    target = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    target = find_user_by_username(db, username)
     if not target:
         db.close()
         return jsonify({"error": "Gebruiker niet gevonden."}), 404

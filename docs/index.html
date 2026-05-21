@@ -20,16 +20,20 @@
 
       <div id="loginPanel" class="auth-panel hidden">
         <h3>Inloggen</h3>
-        <input id="loginUsername" placeholder="gebruikersnaam" />
+        <input id="loginUsername" placeholder="gebruikersnaam" maxlength="20" />
         <input id="loginPassword" type="password" placeholder="wachtwoord" />
+        <div id="loginMessage" class="auth-message hidden"></div>
         <button id="loginBtn">Login</button>
         <button id="logoutBtn" class="secondary">Logout</button>
       </div>
 
       <div id="registerPanel" class="auth-panel hidden">
         <h3>Registreren</h3>
-        <input id="registerUsername" placeholder="gebruikersnaam" />
+        <input id="registerUsername" placeholder="gebruikersnaam" maxlength="20" />
         <input id="registerPassword" type="password" placeholder="wachtwoord" />
+        <input id="registerPasswordConfirm" type="password" placeholder="herhaal wachtwoord" />
+        <div class="field-note">3-20 tekens, alleen letters/cijfers/_ en minimaal 8 tekens wachtwoord.</div>
+        <div id="registerMessage" class="auth-message hidden"></div>
         <button id="registerBtn">Maak account</button>
       </div>
     </div>
@@ -74,8 +78,8 @@
               <strong>SMP</strong>
             </div>
             <div>
-              <span>Status</span>
-              <strong>Prototype</strong>
+              <span>Website</span>
+              <strong>Live</strong>
             </div>
             <div>
               <span>Stijl</span>
@@ -107,7 +111,11 @@
           <p class="eyebrow">Mijn account</p>
           <h2>Profiel</h2>
         </div>
-        <button id="meBtn" class="secondary slim-btn">Ververs</button>
+        <div class="profile-actions">
+          <button id="toggleLinkBtn" class="secondary slim-btn">Koppel account</button>
+          <button id="deleteAccountBtn" class="danger slim-btn">Delete account</button>
+          <button id="meBtn" class="secondary slim-btn">Ververs</button>
+        </div>
       </div>
       <div id="meOut" class="info-box">Nog niet ingelogd.</div>
     </section>
@@ -160,8 +168,8 @@
       <div class="card cta-card">
         <div>
           <p class="eyebrow eyebrow-blue">Next step</p>
-          <h2>Nu eerst design, daarna backend en echte koppelingen</h2>
-          <p>We kunnen hierna de homepagina verder vullen met rules, staff, screenshots, FAQ en een echte SMP landingpage flow.</p>
+          <h2>Login systeem eerst, daarna Minecraft koppeling</h2>
+          <p>We hebben de account-basis nu klaar staan voor registreren, inloggen, rollen en straks de /link code voor Minecraft.</p>
         </div>
         <div class="cta-actions">
           <button id="openLoginFooter">Login</button>
@@ -172,5 +180,5 @@
   </main>
 
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ff173772b718071',t:'MTc3OTM0NDE3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ff4c97559abe247',t:'MTc3OTM3OTE1Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
