@@ -19,6 +19,7 @@ const openLoginFooter = document.getElementById("openLoginFooter");
 const openRegisterFooter = document.getElementById("openRegisterFooter");
 const toggleLinkBtn = document.getElementById("toggleLinkBtn");
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+const clearAdminOutputBtn = document.getElementById("clearAdminOutputBtn");
 
 let currentUser = null;
 
@@ -89,11 +90,14 @@ function showAdminStatus(status) {
 
 function updateProfileButtons() {
   const disabled = !currentUser;
+  const isOwner = currentUser?.role === "OWNER";
+
   toggleLinkBtn.disabled = disabled;
-  deleteAccountBtn.disabled = disabled;
+  deleteAccountBtn.disabled = disabled || isOwner;
 
   if (!currentUser) {
     toggleLinkBtn.textContent = "Koppel account";
+    deleteAccountBtn.textContent = "Delete account";
     return;
   }
 
@@ -104,6 +108,8 @@ function updateProfileButtons() {
   } else {
     toggleLinkBtn.textContent = "Koppel account";
   }
+
+  deleteAccountBtn.textContent = isOwner ? "Owner beschermd" : "Delete account";
 }
 
 function setLoggedOutState(message = "Nog niet ingelogd.") {
@@ -122,6 +128,10 @@ function renderProfile(user) {
   const linkedText = user.linked
     ? `${user.minecraft_username || "Onbekend"}${user.minecraft_uuid ? ` (${user.minecraft_uuid})` : ""}`
     : "Nog niet gekoppeld";
+
+  const ownerNotice = user.role === "OWNER"
+    ? `<div class="link-code-box" style="background:rgba(59,130,246,0.12);border-color:rgba(96,165,250,0.2)"><strong>Owner account beveiligd</strong><div style="margin-top:8px;color:#bfdbfe">Dit account kan niet via de website verwijderd worden.</div></div>`
+    : "";
 
   const linkCodeSection = user.link_code
     ? `
@@ -153,6 +163,7 @@ function renderProfile(user) {
         <span>${linkedText}</span>
       </div>
     </div>
+    ${ownerNotice}
     ${linkCodeSection}
   `;
   sessionPill.textContent = `${user.username} · ${user.role}`;
@@ -320,6 +331,11 @@ deleteAccountBtn.addEventListener("click", async () => {
     return;
   }
 
+  if (currentUser.role === "OWNER") {
+    meOut.textContent = "Het OWNER account is beschermd en kan niet verwijderd worden.";
+    return;
+  }
+
   const confirmed = confirm(`Weet je zeker dat je account ${currentUser.username} verwijderd moet worden?`);
   if (!confirmed) return;
 
@@ -330,6 +346,10 @@ deleteAccountBtn.addEventListener("click", async () => {
   } catch (error) {
     meOut.textContent = error.message;
   }
+});
+
+clearAdminOutputBtn.addEventListener("click", () => {
+  adminOut.innerHTML = "Admin output is geleegd. Klik op <strong>Ververs admin data</strong> om alles opnieuw op te halen.";
 });
 
 document.getElementById("startBtn").addEventListener("click", async () => {

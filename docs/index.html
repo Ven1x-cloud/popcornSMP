@@ -4,30 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Popcorn SMP</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
-
-  <script>
-(async function () {
-  const logoPath = "logo.svg";
-
-  try {
-    const res = await fetch(logoPath, { method: "HEAD" });
-    if (!res.ok) return;
-
-    let icon = document.querySelector('link[rel="icon"]');
-    if (!icon) {
-      icon = document.createElement("link");
-      icon.rel = "icon";
-      document.head.appendChild(icon);
-    }
-
-    icon.type = "image/svg+xml";
-    icon.href = logoPath;
-  } catch (err) {
-    console.log("logo.svg niet gevonden");
-  }
-})();
-</script>
 </head>
 <body>
   <div class="background-glow glow-1"></div>
@@ -62,9 +40,9 @@
     </div>
 
     <div class="brand-wrap">
-  <img src="logo.svg?v=2" alt="Popcorn SMP logo" class="brand-logo" />
-  <span class="brand-name">Popcorn SMP</span>
-</div>
+      <img src="logo.svg?v=2" alt="Popcorn SMP logo" class="brand-logo" />
+      <span class="brand-name">Popcorn SMP</span>
+    </div>
 
     <div id="sessionPill" class="session-pill">Niet ingelogd</div>
   </header>
@@ -149,7 +127,10 @@
           <p class="eyebrow">Beheer</p>
           <h2>Admin panel</h2>
         </div>
-        <button id="loadAdminBtn" class="secondary slim-btn">Ververs admin data</button>
+        <div class="profile-actions">
+          <button id="clearAdminOutputBtn" class="secondary slim-btn">Reset output</button>
+          <button id="loadAdminBtn" class="secondary slim-btn">Ververs admin data</button>
+        </div>
       </div>
 
       <div class="server-row">
@@ -203,5 +184,5 @@
   </main>
 
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ff4dcc54e69e754',t:'MTc3OTM3OTk0Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ffa41ce7acb553a',t:'MTc3OTQzNjUxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
