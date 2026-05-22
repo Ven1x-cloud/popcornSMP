@@ -145,12 +145,15 @@ button:disabled {
 }
 .brand-name { font-size: 20px; font-weight: 900; }
 .session-pill {
-  padding: 2px 2px;
+  width: auto;
+  margin-top: 0;
+  padding: 10px 14px;
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
   color: var(--muted);
   font-size: 14px;
   white-space: nowrap;
+  box-shadow: none;
 }
 .session-pill.admin-trigger {
   border: 1px solid rgba(96,165,250,0.3);
