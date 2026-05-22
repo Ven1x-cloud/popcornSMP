@@ -15,8 +15,8 @@
   <header class="topbar">
     <div class="auth-anchor">
       <div class="auth-buttons">
-        <button id="loginToggle" class="chip-btn">Login</button>
-        <button id="registerToggle" class="chip-btn chip-btn-alt">Registreren</button>
+        <button id="loginToggle" class="chip-btn" type="button">Login</button>
+        <button id="registerToggle" class="chip-btn chip-btn-alt" type="button">Registreren</button>
       </div>
 
       <div id="loginPanel" class="auth-panel hidden">
@@ -24,8 +24,8 @@
         <input id="loginUsername" placeholder="gebruikersnaam" maxlength="20" />
         <input id="loginPassword" type="password" placeholder="wachtwoord" />
         <div id="loginMessage" class="auth-message hidden"></div>
-        <button id="loginBtn">Login</button>
-        <button id="logoutBtn" class="secondary">Logout</button>
+        <button id="loginBtn" type="button">Login</button>
+        <button id="logoutBtn" class="secondary" type="button">Logout</button>
       </div>
 
       <div id="registerPanel" class="auth-panel hidden">
@@ -35,7 +35,7 @@
         <input id="registerPasswordConfirm" type="password" placeholder="herhaal wachtwoord" />
         <div class="field-note">3-20 tekens, alleen letters/cijfers/_ en minimaal 8 tekens wachtwoord.</div>
         <div id="registerMessage" class="auth-message hidden"></div>
-        <button id="registerBtn">Maak account</button>
+        <button id="registerBtn" type="button">Maak account</button>
       </div>
     </div>
 
@@ -44,7 +44,7 @@
       <span class="brand-name">Popcorn SMP</span>
     </div>
 
-    <div id="sessionPill" class="session-pill">Niet ingelogd</div>
+    <button id="sessionPill" class="session-pill" type="button">Niet ingelogd</button>
   </header>
 
   <main class="container">
@@ -64,8 +64,8 @@
         </div>
 
         <div class="hero-actions">
-          <button id="openLoginHero">Login</button>
-          <button id="openRegisterHero" class="secondary">Maak account</button>
+          <button id="openLoginHero" type="button">Login</button>
+          <button id="openRegisterHero" class="secondary" type="button">Maak account</button>
         </div>
       </div>
 
@@ -113,39 +113,12 @@
           <h2>Profiel</h2>
         </div>
         <div class="profile-actions">
-          <button id="toggleLinkBtn" class="secondary slim-btn">Koppel account</button>
-          <button id="deleteAccountBtn" class="danger slim-btn">Delete account</button>
-          <button id="meBtn" class="secondary slim-btn">Ververs</button>
+          <button id="toggleLinkBtn" class="secondary slim-btn" type="button">Koppel account</button>
+          <button id="deleteAccountBtn" class="danger slim-btn" type="button">Delete account</button>
+          <button id="meBtn" class="secondary slim-btn" type="button">Ververs</button>
         </div>
       </div>
       <div id="meOut" class="info-box">Nog niet ingelogd.</div>
-    </section>
-
-    <section id="adminPanel" class="card info-card admin-card hidden">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Beheer</p>
-          <h2>Admin panel</h2>
-        </div>
-        <div class="profile-actions">
-          <button id="clearAdminLogsBtn" class="danger slim-btn">Leeg log</button>
-          <button id="loadAdminBtn" class="secondary slim-btn">Ververs admin data</button>
-        </div>
-      </div>
-
-      <div class="server-row">
-        <div>
-          <p class="small-label">Server status</p>
-          <div id="serverStatus" class="status offline">offline</div>
-        </div>
-        <div class="server-actions">
-          <button id="startBtn">Start</button>
-          <button id="restartBtn" class="warning">Restart</button>
-          <button id="stopBtn" class="danger">Stop</button>
-        </div>
-      </div>
-
-      <div id="adminOut" class="info-box">Nog geen admin data geladen.</div>
     </section>
 
     <section class="gaming-section">
@@ -176,12 +149,61 @@
           <p>We hebben de account-basis nu klaar staan voor registreren, inloggen, rollen en straks de /link code voor Minecraft.</p>
         </div>
         <div class="cta-actions">
-          <button id="openLoginFooter">Login</button>
-          <button id="openRegisterFooter" class="secondary">Registreren</button>
+          <button id="openLoginFooter" type="button">Login</button>
+          <button id="openRegisterFooter" class="secondary" type="button">Registreren</button>
         </div>
       </div>
     </section>
   </main>
+
+  <div id="adminOverlay" class="admin-overlay hidden">
+    <div id="adminOverlayBackdrop" class="admin-overlay-backdrop"></div>
+    <section class="admin-modal card">
+      <div class="admin-modal-header">
+        <div>
+          <p class="eyebrow eyebrow-blue">Beheer</p>
+          <h2>Admin panel</h2>
+        </div>
+        <button id="closeAdminOverlayBtn" class="secondary slim-btn" type="button">Sluiten</button>
+      </div>
+
+      <div class="admin-notice">
+        <strong>Let op:</strong> de start/stop/restart knoppen zijn nog <strong>niet</strong> gekoppeld aan jouw echte hostpanel. Die echte koppeling doen we later. Rollen beheren werkt al wel via de website.
+      </div>
+
+      <div class="server-row admin-server-row">
+        <div>
+          <p class="small-label">Server status</p>
+          <div id="serverStatus" class="status offline">offline</div>
+        </div>
+        <div class="server-actions">
+          <button id="startBtn" class="secondary" type="button" disabled>Start (later)</button>
+          <button id="restartBtn" class="secondary" type="button" disabled>Restart (later)</button>
+          <button id="stopBtn" class="secondary" type="button" disabled>Stop (later)</button>
+        </div>
+      </div>
+
+      <div class="role-manager card">
+        <div class="role-manager-head">
+          <div>
+            <p class="eyebrow eyebrow-gold">Rollen beheren</p>
+            <h3>Geef of verwijder admin</h3>
+          </div>
+          <button id="loadAdminBtn" class="secondary slim-btn" type="button">Ververs admin data</button>
+        </div>
+
+        <input id="roleUsernameInput" placeholder="gebruikersnaam invullen" maxlength="20" />
+        <div class="profile-actions">
+          <button id="grantAdminBtn" type="button">Maak admin</button>
+          <button id="removeAdminBtn" class="danger" type="button">Verwijder admin</button>
+          <button id="clearAdminLogsBtn" class="secondary slim-btn" type="button">Leeg log</button>
+        </div>
+        <div id="roleActionMessage" class="auth-message hidden"></div>
+      </div>
+
+      <div id="adminOut" class="info-box">Nog geen admin data geladen.</div>
+    </section>
+  </div>
 
   <script src="app.js"></script>
 </body>

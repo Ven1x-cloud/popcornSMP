@@ -3,11 +3,12 @@ const tokenKey = "smp_token";
 
 const meOut = document.getElementById("meOut");
 const adminOut = document.getElementById("adminOut");
-const adminPanel = document.getElementById("adminPanel");
-const serverStatus = document.getElementById("serverStatus");
+const adminOverlay = document.getElementById("adminOverlay");
 const sessionPill = document.getElementById("sessionPill");
+const serverStatus = document.getElementById("serverStatus");
 const loginMessage = document.getElementById("loginMessage");
 const registerMessage = document.getElementById("registerMessage");
+const roleActionMessage = document.getElementById("roleActionMessage");
 
 const loginPanel = document.getElementById("loginPanel");
 const registerPanel = document.getElementById("registerPanel");
@@ -20,6 +21,12 @@ const openRegisterFooter = document.getElementById("openRegisterFooter");
 const toggleLinkBtn = document.getElementById("toggleLinkBtn");
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 const clearAdminLogsBtn = document.getElementById("clearAdminLogsBtn");
+const closeAdminOverlayBtn = document.getElementById("closeAdminOverlayBtn");
+const adminOverlayBackdrop = document.getElementById("adminOverlayBackdrop");
+const loadAdminBtn = document.getElementById("loadAdminBtn");
+const grantAdminBtn = document.getElementById("grantAdminBtn");
+const removeAdminBtn = document.getElementById("removeAdminBtn");
+const roleUsernameInput = document.getElementById("roleUsernameInput");
 
 let currentUser = null;
 
@@ -83,6 +90,16 @@ function togglePanel(panel) {
   }
 }
 
+function openAdminOverlay() {
+  if (!currentUser) return;
+  if (currentUser.role !== "ADMIN" && currentUser.role !== "OWNER") return;
+  adminOverlay.classList.remove("hidden");
+}
+
+function closeAdminOverlay() {
+  adminOverlay.classList.add("hidden");
+}
+
 function showAdminStatus(status) {
   serverStatus.textContent = status;
   serverStatus.className = `status ${status}`;
@@ -91,14 +108,20 @@ function showAdminStatus(status) {
 function updateProfileButtons() {
   const disabled = !currentUser;
   const isOwner = currentUser?.role === "OWNER";
+  const isAdmin = currentUser?.role === "ADMIN" || currentUser?.role === "OWNER";
 
   toggleLinkBtn.disabled = disabled;
   deleteAccountBtn.disabled = disabled || isOwner;
-  clearAdminLogsBtn.disabled = !currentUser || !isOwner;
+  loadAdminBtn.disabled = !isAdmin;
+  clearAdminLogsBtn.disabled = !isOwner;
+  grantAdminBtn.disabled = !isOwner;
+  removeAdminBtn.disabled = !isOwner;
 
   if (!currentUser) {
     toggleLinkBtn.textContent = "Koppel account";
     deleteAccountBtn.textContent = "Delete account";
+    sessionPill.textContent = "Niet ingelogd";
+    sessionPill.classList.remove("admin-trigger");
     clearAdminLogsBtn.textContent = "Leeg log";
     return;
   }
@@ -113,15 +136,21 @@ function updateProfileButtons() {
 
   deleteAccountBtn.textContent = isOwner ? "Owner beschermd" : "Delete account";
   clearAdminLogsBtn.textContent = isOwner ? "Leeg log" : "Owner only";
+  sessionPill.textContent = `${currentUser.username} · ${currentUser.role}`;
+
+  if (isAdmin) {
+    sessionPill.classList.add("admin-trigger");
+  } else {
+    sessionPill.classList.remove("admin-trigger");
+  }
 }
 
 function setLoggedOutState(message = "Nog niet ingelogd.") {
   currentUser = null;
   meOut.textContent = message;
   adminOut.textContent = "Nog geen admin data geladen.";
-  sessionPill.textContent = "Niet ingelogd";
-  adminPanel.classList.add("hidden");
   showAdminStatus("offline");
+  closeAdminOverlay();
   updateProfileButtons();
 }
 
@@ -134,6 +163,10 @@ function renderProfile(user) {
 
   const ownerNotice = user.role === "OWNER"
     ? `<div class="link-code-box" style="background:rgba(59,130,246,0.12);border-color:rgba(96,165,250,0.2)"><strong>Owner account beveiligd</strong><div style="margin-top:8px;color:#bfdbfe">Dit account kan niet via de website verwijderd worden.</div></div>`
+    : "";
+
+  const adminHint = (user.role === "ADMIN" || user.role === "OWNER")
+    ? `<div class="link-code-box" style="background:rgba(234,179,8,0.12);border-color:rgba(234,179,8,0.18)"><strong>Admin menu</strong><div style="margin-top:8px;color:#fde68a">Klik rechtsboven op je gebruikersnaam en rol om het admin panel te openen.</div></div>`
     : "";
 
   const linkCodeSection = user.link_code
@@ -167,9 +200,9 @@ function renderProfile(user) {
       </div>
     </div>
     ${ownerNotice}
+    ${adminHint}
     ${linkCodeSection}
   `;
-  sessionPill.textContent = `${user.username} · ${user.role}`;
   updateProfileButtons();
 }
 
@@ -199,12 +232,8 @@ async function loadMe() {
     const data = await api("/api/me");
     renderProfile(data.user);
 
-    const role = data.user.role;
-    if (role === "ADMIN" || role === "OWNER") {
-      adminPanel.classList.remove("hidden");
+    if (data.user.role === "ADMIN" || data.user.role === "OWNER") {
       await loadAdmin();
-    } else {
-      adminPanel.classList.add("hidden");
     }
   } catch (error) {
     setLoggedOutState(error.message);
@@ -218,7 +247,6 @@ async function loadAdmin() {
     showAdminStatus(data.server.status);
   } catch (error) {
     adminOut.textContent = error.message;
-    adminPanel.classList.add("hidden");
   }
 }
 
@@ -240,6 +268,16 @@ openRegisterFooter.addEventListener("click", () => togglePanel(registerPanel));
 loginPanel.addEventListener("click", (event) => event.stopPropagation());
 registerPanel.addEventListener("click", (event) => event.stopPropagation());
 document.addEventListener("click", closeAuthPanels);
+
+sessionPill.addEventListener("click", () => {
+  if (!currentUser) return;
+  if (currentUser.role === "ADMIN" || currentUser.role === "OWNER") {
+    openAdminOverlay();
+  }
+});
+
+closeAdminOverlayBtn.addEventListener("click", closeAdminOverlay);
+adminOverlayBackdrop.addEventListener("click", closeAdminOverlay);
 
 document.getElementById("registerUsername").addEventListener("blur", async (event) => {
   const username = event.target.value.trim();
@@ -311,7 +349,7 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 });
 
 document.getElementById("meBtn").addEventListener("click", loadMe);
-document.getElementById("loadAdminBtn").addEventListener("click", loadAdmin);
+loadAdminBtn.addEventListener("click", loadAdmin);
 
 toggleLinkBtn.addEventListener("click", async () => {
   if (!currentUser) {
@@ -373,39 +411,51 @@ clearAdminLogsBtn.addEventListener("click", async () => {
   }
 });
 
-document.getElementById("startBtn").addEventListener("click", async () => {
+grantAdminBtn.addEventListener("click", async () => {
+  if (!currentUser || currentUser.role !== "OWNER") {
+    setMessage(roleActionMessage, "error", "Alleen OWNER mag admins beheren.");
+    return;
+  }
+
+  const username = roleUsernameInput.value.trim();
+  if (!username) {
+    setMessage(roleActionMessage, "error", "Vul eerst een gebruikersnaam in.");
+    return;
+  }
+
   try {
-    await api("/api/admin/server/action", {
+    const data = await api("/api/admin/promote", {
       method: "POST",
-      body: JSON.stringify({ action: "start" }),
+      body: JSON.stringify({ username, role: "ADMIN" }),
     });
-    await loadAdmin();
+    setMessage(roleActionMessage, "success", `${data.user.username} is nu ADMIN.`);
+    roleUsernameInput.value = "";
   } catch (error) {
-    adminOut.textContent = error.message;
+    setMessage(roleActionMessage, "error", error.message);
   }
 });
 
-document.getElementById("restartBtn").addEventListener("click", async () => {
-  try {
-    await api("/api/admin/server/action", {
-      method: "POST",
-      body: JSON.stringify({ action: "restart" }),
-    });
-    await loadAdmin();
-  } catch (error) {
-    adminOut.textContent = error.message;
+removeAdminBtn.addEventListener("click", async () => {
+  if (!currentUser || currentUser.role !== "OWNER") {
+    setMessage(roleActionMessage, "error", "Alleen OWNER mag admins beheren.");
+    return;
   }
-});
 
-document.getElementById("stopBtn").addEventListener("click", async () => {
+  const username = roleUsernameInput.value.trim();
+  if (!username) {
+    setMessage(roleActionMessage, "error", "Vul eerst een gebruikersnaam in.");
+    return;
+  }
+
   try {
-    await api("/api/admin/server/action", {
+    const data = await api("/api/admin/promote", {
       method: "POST",
-      body: JSON.stringify({ action: "stop" }),
+      body: JSON.stringify({ username, role: "USER" }),
     });
-    await loadAdmin();
+    setMessage(roleActionMessage, "success", `${data.user.username} is nu weer USER.`);
+    roleUsernameInput.value = "";
   } catch (error) {
-    adminOut.textContent = error.message;
+    setMessage(roleActionMessage, "error", error.message);
   }
 });
 
