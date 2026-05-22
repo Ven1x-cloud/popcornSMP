@@ -94,10 +94,12 @@ function openAdminOverlay() {
   if (!currentUser) return;
   if (currentUser.role !== "ADMIN" && currentUser.role !== "OWNER") return;
   adminOverlay.classList.remove("hidden");
+  document.body.classList.add("overlay-open");
 }
 
 function closeAdminOverlay() {
   adminOverlay.classList.add("hidden");
+  document.body.classList.remove("overlay-open");
 }
 
 function showAdminStatus(status) {
@@ -278,6 +280,11 @@ sessionPill.addEventListener("click", () => {
 
 closeAdminOverlayBtn.addEventListener("click", closeAdminOverlay);
 adminOverlayBackdrop.addEventListener("click", closeAdminOverlay);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !adminOverlay.classList.contains("hidden")) {
+    closeAdminOverlay();
+  }
+});
 
 document.getElementById("registerUsername").addEventListener("blur", async (event) => {
   const username = event.target.value.trim();
