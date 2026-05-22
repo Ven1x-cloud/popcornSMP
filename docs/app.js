@@ -19,7 +19,7 @@ const openLoginFooter = document.getElementById("openLoginFooter");
 const openRegisterFooter = document.getElementById("openRegisterFooter");
 const toggleLinkBtn = document.getElementById("toggleLinkBtn");
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
-const clearAdminOutputBtn = document.getElementById("clearAdminOutputBtn");
+const clearAdminLogsBtn = document.getElementById("clearAdminLogsBtn");
 
 let currentUser = null;
 
@@ -94,10 +94,12 @@ function updateProfileButtons() {
 
   toggleLinkBtn.disabled = disabled;
   deleteAccountBtn.disabled = disabled || isOwner;
+  clearAdminLogsBtn.disabled = !currentUser || !isOwner;
 
   if (!currentUser) {
     toggleLinkBtn.textContent = "Koppel account";
     deleteAccountBtn.textContent = "Delete account";
+    clearAdminLogsBtn.textContent = "Leeg log";
     return;
   }
 
@@ -110,6 +112,7 @@ function updateProfileButtons() {
   }
 
   deleteAccountBtn.textContent = isOwner ? "Owner beschermd" : "Delete account";
+  clearAdminLogsBtn.textContent = isOwner ? "Leeg log" : "Owner only";
 }
 
 function setLoggedOutState(message = "Nog niet ingelogd.") {
@@ -348,8 +351,26 @@ deleteAccountBtn.addEventListener("click", async () => {
   }
 });
 
-clearAdminOutputBtn.addEventListener("click", () => {
-  adminOut.innerHTML = "Admin output is geleegd. Klik op <strong>Ververs admin data</strong> om alles opnieuw op te halen.";
+clearAdminLogsBtn.addEventListener("click", async () => {
+  if (!currentUser) {
+    adminOut.textContent = "Log eerst in.";
+    return;
+  }
+
+  if (currentUser.role !== "OWNER") {
+    adminOut.textContent = "Alleen het OWNER account mag het admin log leegmaken.";
+    return;
+  }
+
+  const confirmed = confirm("Weet je zeker dat je het admin log wilt leegmaken?");
+  if (!confirmed) return;
+
+  try {
+    const data = await api("/api/admin/server/logs", { method: "DELETE" });
+    adminOut.textContent = data.message;
+  } catch (error) {
+    adminOut.textContent = error.message;
+  }
 });
 
 document.getElementById("startBtn").addEventListener("click", async () => {
