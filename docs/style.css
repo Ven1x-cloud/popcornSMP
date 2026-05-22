@@ -163,6 +163,13 @@ button.slim-btn {
   align-items: center;
   gap: 12px;
 }
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.25));
+}
 .brand-badge {
   width: 42px;
   height: 42px;
@@ -497,9 +504,4 @@ button.slim-btn {
   .brand-name {
     font-size: 18px;
   }
-  .brand-logo {
-  width: 90px;
-  height: 90px;
-  object-fit: contain;
-}
 }
